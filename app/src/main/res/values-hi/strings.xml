@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">VolumeChanger</string>
+    <string name="name">नाम</string>
+    <string name="location">स्थान</string>
+    <string name="range">श्रेणी</string>
+    <string name="bell_volume">बेल वॉल्यूम</string>
+    <string name="media_volume">मीडिया वॉल्यूम</string>
+    <string name="just_yes">हाँ</string>
+    <string name="just_No">नहीं</string>
+    <string name="delete_location_text">क्या आप वाकई इस स्थान को हटाना चाहते हैं?</string>
+    <string name="overlap_other_place">यह दूसरी जगह के साथ ओवरलैप करता है।</string>
+    <string name="add_location">स्थान जोड़ना</string>
+    <string name="mute">मूक</string>
+    <string name="vibration">कंपन</string>
+    <string name="max">मैक्स</string>
+    <string name="requires_permissions">नीचे अनुमति की आवश्यकता है</string>
+    <string name="location_body">उपयोगकर्ता स्थान प्राप्त करने\nके लिए उपयोग किया जाता है</string>
+    <string name="disturb_place_holder">पहुंच को परेशान न करें</string>
+    <string name="disturb_body">मात्रा समायोजन के लिए प्रयोग करें</string>
+</resources>

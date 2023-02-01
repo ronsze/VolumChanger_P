@@ -1,4 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">VolumeChanger</string>
+    <string name="name">名</string>
+    <string name="location">場所</string>
+    <string name="range">範囲</string>
+    <string name="bell_volume">電話音量</string>
+    <string name="media_volume">メディア音量</string>
+    <string name="just_yes">はい</string>
+    <string name="just_No">いいえ</string>
+    <string name="delete_location_text">この場所を削除しますか</string>
+    <string name="overlap_other_place">他の場所と重なります</string>
+    <string name="add_location">場所追加</string>
+    <string name="mute">消音</string>
+    <string name="vibration">振動</string>
+    <string name="max">最大</string>
+    <string name="requires_permissions">以下の権限が必要です</string>
+    <string name="location_body">ユーザ位置を取得するために使用</string>
+    <string name="disturb_place_holder">妨害禁止</string>
+    <string name="disturb_body">音量調節に使用</string>
 </resources>

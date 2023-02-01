@@ -4,9 +4,18 @@
     <string name="name">이름</string>
     <string name="location">위치</string>
     <string name="range">범위</string>
-    <string name="volume">음량</string>
+    <string name="bell_volume">전화 음량</string>
+    <string name="media_volume">미디어 음량</string>
     <string name="just_yes">네</string>
     <string name="just_No">아니오</string>
     <string name="delete_location_text">이 위치를 제거하시겠습니까?</string>
     <string name="overlap_other_place">다른 장소와 겹칩니다.</string>
+    <string name="add_location">위치 추가</string>
+    <string name="mute">음소거</string>
+    <string name="vibration">진동</string>
+    <string name="max">최대</string>
+    <string name="requires_permissions">아래 권한이 필요합니다.</string>
+    <string name="location_body">사용자 위치를 얻기위해 사용</string>
+    <string name="disturb_place_holder">방해 금지</string>
+    <string name="disturb_body">음량 조절을 위해 사용</string>
 </resources>

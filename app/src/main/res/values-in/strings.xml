@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">VolumeChanger</string>
+    <string name="name">Nama</string>
+    <string name="location">Lokasi</string>
+    <string name="range">Jangkauan</string>
+    <string name="bell_volume">Volume Bel</string>
+    <string name="media_volume">Volume Media</string>
+    <string name="just_yes">Ya</string>
+    <string name="just_No">Tidak</string>
+    <string name="delete_location_text">Yakin ingin menghapus lokasi ini?</string>
+    <string name="overlap_other_place">Itu tumpang tindih dengan tempat lain.</string>
+    <string name="add_location">Menambahkan lokasi</string>
+    <string name="mute">Bisu</string>
+    <string name="vibration">Getaran</string>
+    <string name="max">Maks</string>
+    <string name="requires_permissions">Membutuhkan izin di bawah ini</string>
+    <string name="location_body">Digunakan untuk mendapatkan\nlokasi pengguna</string>
+    <string name="disturb_place_holder">Akses Jangan Ganggu</string>
+    <string name="disturb_body">Gunakan untuk penyesuaian volume</string>
+</resources>

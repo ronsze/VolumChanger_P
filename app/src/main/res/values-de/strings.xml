@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">VolumeChanger</string>
+    <string name="name">der Name</string>
+    <string name="location">die Lage</string>
+    <string name="range">der Umfang</string>
+    <string name="bell_volume">Lautstärke des Telefons</string>
+    <string name="media_volume">Lautstärke der Medien</string>
+    <string name="just_yes">ja</string>
+    <string name="just_No">Nein</string>
+    <string name="delete_location_text">Möchten Sie diese Position\bwirklich entfernen?</string>
+    <string name="overlap_other_place">Überlappung mit anderen Orten.</string>
+    <string name="add_location">Ort hinzufügen</string>
+    <string name="mute">Stummschaltung</string>
+    <string name="vibration">die Erschütterung</string>
+    <string name="max">das Größte</string>
+    <string name="requires_permissions">Sie benötigen die\nGenehmigung unten.</string>
+    <string name="location_body">Verwenden, um die Position des\nBenutzers zu erhalten</string>
+    <string name="disturb_place_holder">Keine Unterbrechungen</string>
+    <string name="disturb_body">Zur Lautstärkeregelung</string>
+</resources>

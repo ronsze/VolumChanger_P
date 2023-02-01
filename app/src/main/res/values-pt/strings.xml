@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">VolumeChanger</string>
+    <string name="name">nome</string>
+    <string name="location">localização</string>
+    <string name="range">Alcance</string>
+    <string name="bell_volume">Volume da Campainha</string>
+    <string name="media_volume">Volume de mídia</string>
+    <string name="just_yes">Sim</string>
+    <string name="just_No">Não</string>
+    <string name="delete_location_text">Tem certeza de que deseja remover este local?</string>
+    <string name="overlap_other_place">Ele se sobrepõe a outro lugar.</string>
+    <string name="add_location">Adicionar local</string>
+    <string name="mute">Mudo</string>
+    <string name="vibration">Vibração</string>
+    <string name="max">máx.</string>
+    <string name="requires_permissions">Requer permissão abaixo</string>
+    <string name="location_body">Usado para obter a\nlocalização do usuário</string>
+    <string name="disturb_place_holder">Não perturbe o acesso</string>
+    <string name="disturb_body">Use para ajuste de volume</string>
+</resources>

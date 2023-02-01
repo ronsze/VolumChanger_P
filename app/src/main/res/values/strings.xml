@@ -18,6 +18,11 @@
     <string name="vibration">Vibration</string>
     <string name="max">Max</string>
 
+    <string name="requires_permissions">Requires permission below</string>
+    <string name="location_body">Used to get a user location</string>
+    <string name="disturb_place_holder">Do Not Disturb access</string>
+    <string name="disturb_body">Use for volume adjustment</string>
+
     <string-array name="range_array">
         <item>100M</item>
         <item>200M</item>

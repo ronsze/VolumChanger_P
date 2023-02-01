@@ -19,4 +19,6 @@
     <color name="translucent_yellow">#50FFFF00</color>
     <color name="translucent_sky_blue">#5000FFFF</color>
     <color name="translucent_purple">#50BB86FC</color>
+
+    <color name="skysky_blue">#FF9DC3E6</color>
 </resources>

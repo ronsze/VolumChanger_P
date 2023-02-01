@@ -3,13 +3,21 @@ package com.sdbk.volumechanger.features.map
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
+import android.widget.FrameLayout
+import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.admanager.AdManagerAdView
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingRequest
@@ -44,25 +52,54 @@ class MapActivity: BaseActivity(), OnMapReadyCallback {
         private const val DEFAULT_ZOOM = 14.5f
     }
 
+    private val context: Context = this
     private lateinit var binding: ActivityMapBinding
     @Inject lateinit var locationDao: LocationDao
     private lateinit var googleMap: GoogleMap
+    private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+    private val PERMISSIONS_REQUEST_CODE = 100
+
+    private lateinit var adContainerView: FrameLayout
+    private var initialLayoutComplete = false
 
     private lateinit var geofencingClient: GeofencingClient
-    private val geofenceList = ArrayList<Geofence>()
     private val globalLocationList = ArrayList<Location>()
     private val markerList = ArrayList<Marker?>()
     private val circleList = ArrayList<Circle>()
 
     private val geoPending: PendingIntent by lazy {
         val intent = Intent(this, GeofenceBroadcastReceiver::class.java)
-        PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        if (Build.VERSION.SDK_INT >= 31) {
+            PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_MUTABLE)
+        } else {
+            PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        }
     }
+
+    private val adSize: AdSize
+        @RequiresApi(Build.VERSION_CODES.R)
+        get() {
+            val windowMetrics = windowManager.currentWindowMetrics
+            val bounds = windowMetrics.bounds
+
+            var adWidthPixels = adContainerView.width.toFloat()
+
+            if (adWidthPixels == 0f) {
+                adWidthPixels = bounds.width().toFloat()
+            }
+
+            val density = resources.displayMetrics.density
+            val adWidth = (adWidthPixels/ density).toInt()
+
+            return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, adWidth)
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMapBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        loadAdv()
 
         geofencingClient = LocationServices.getGeofencingClient(this)
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as? SupportMapFragment
@@ -75,6 +112,27 @@ class MapActivity: BaseActivity(), OnMapReadyCallback {
         googleMap.setOnMarkerClickListener(onClickMarker)
         initMarkers()
         initCameraLocation()
+    }
+
+    private fun loadAdv() {
+        adContainerView = findViewById(R.id.adView)
+        val adView = AdManagerAdView(this)
+        adContainerView.addView(adView)
+
+        adContainerView.viewTreeObserver.addOnGlobalLayoutListener {
+            if (!initialLayoutComplete) {
+                initialLayoutComplete = true
+
+                adView.adUnitId = "ca-app-pub-3940256099942544/6300978111"
+                if (Build.VERSION.SDK_INT >= 30) adView.setAdSizes(adSize, AdSize.BANNER)
+                else adView.setAdSize(AdSize.BANNER)
+
+
+                val adRequest = AdRequest.Builder().build()
+
+                adView.loadAd(adRequest)
+            }
+        }
     }
 
     private fun initMarkers() {
@@ -147,7 +205,7 @@ class MapActivity: BaseActivity(), OnMapReadyCallback {
             globalLocationList.remove(globalLocationList.first { it.latLng == location.latLng })
             deleteMarker(location)
             deleteCircle(location)
-            removeGeofences(location)
+            removeGeofences()
         }
     }
 
@@ -168,9 +226,42 @@ class MapActivity: BaseActivity(), OnMapReadyCallback {
     }
 
     private fun initCameraLocation() {
-
-        val latLng = getLatLngFromString(intent.getStringExtra(LAT_LNG) ?: DEFAULT_LAT_LNG)
+        val latLng = getLatLngFromString(intent.getStringExtra(LAT_LNG) ?: getCurrentLocation())
         changeCameraLocation(latLng.latitude, latLng.longitude)
+    }
+
+    private fun getCurrentLocation(): String {
+        val userLocation: android.location.Location? = getCurrentLatLng()
+        return if (userLocation != null) {
+            val lat = userLocation.latitude
+            val lng = userLocation.longitude
+            "$lat,$lng"
+        } else {
+            DEFAULT_LAT_LNG
+        }
+    }
+
+    private fun getCurrentLatLng(): android.location.Location? {
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager?
+        var currentLatLng: android.location.Location? = null
+        var hasFineLocationPermission = ContextCompat.checkSelfPermission(this,
+            Manifest.permission.ACCESS_FINE_LOCATION)
+        var hasCoarseLocationPermission = ContextCompat.checkSelfPermission(this,
+            Manifest.permission.ACCESS_COARSE_LOCATION)
+
+        currentLatLng = if (hasFineLocationPermission == PackageManager.PERMISSION_GRANTED &&
+            hasCoarseLocationPermission == PackageManager.PERMISSION_GRANTED) {
+            val locationProvider = LocationManager.GPS_PROVIDER
+            locationManager?.getLastKnownLocation(locationProvider)
+        } else{
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, REQUIRED_PERMISSIONS[0])){
+                ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, PERMISSIONS_REQUEST_CODE)
+            }else {
+                ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, PERMISSIONS_REQUEST_CODE)
+            }
+            getCurrentLatLng()
+        }
+        return currentLatLng
     }
 
     private fun changeCameraLocation(lat: Double, lng: Double) {
@@ -267,10 +358,23 @@ class MapActivity: BaseActivity(), OnMapReadyCallback {
     }
 
     private fun addGeofences() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            geofencingClient.addGeofences(getGeofencingRequest(geofenceList), geoPending).run {
-                addOnSuccessListener {}
-                addOnFailureListener {}
+        lifecycleScope.launch(Dispatchers.Main) {
+            val geofenceList = ArrayList<Geofence>()
+            val locationList = withContext(Dispatchers.IO) {
+                locationDao.getAll()
+            }
+
+            locationList.forEach {
+                geofenceList.add(
+                    getGeofence(it.latLng, getLatLngFromString(it.latLng), it.range.toFloat())
+                )
+            }
+
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                geofencingClient.addGeofences(getGeofencingRequest(geofenceList), geoPending).run {
+                    addOnSuccessListener {}
+                    addOnFailureListener {}
+                }
             }
         }
     }
@@ -278,7 +382,7 @@ class MapActivity: BaseActivity(), OnMapReadyCallback {
     private fun getGeofence(reqId: String, latLng: LatLng, radius: Float): Geofence {
         return Geofence.Builder()
             .setRequestId(reqId)
-            .setCircularRegion(latLng.latitude, latLng.longitude, radius)
+            .setCircularRegion(latLng.latitude, latLng.longitude, radius / 2)
             .setExpirationDuration(Geofence.NEVER_EXPIRE)
             .setLoiteringDelay(60000)
             .setTransitionTypes(
@@ -287,8 +391,7 @@ class MapActivity: BaseActivity(), OnMapReadyCallback {
             ).build()
     }
 
-    private fun removeGeofences(location: Location) {
-        geofenceList.remove(geofenceList.first { it.requestId == location.latLng })
+    private fun removeGeofences() {
         geofencingClient.removeGeofences(geoPending).run {
             addOnSuccessListener {
                 addGeofences()
