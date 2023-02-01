@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">VolumeChanger</string>
+    <string name="name">이름</string>
+    <string name="location">위치</string>
+    <string name="range">범위</string>
+    <string name="volume">음량</string>
+    <string name="just_yes">네</string>
+    <string name="just_No">아니오</string>
+    <string name="delete_location_text">이 위치를 제거하시겠습니까?</string>
+    <string name="overlap_other_place">다른 장소와 겹칩니다.</string>
+</resources>
