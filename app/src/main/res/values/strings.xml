@@ -30,4 +30,6 @@
         <item>500M</item>
         <item>1000M</item>
     </string-array>
+
+    <string name="admob_unit_id" translatable="false">ca-app-pub-3940256099942544/6300978111</string>
 </resources>

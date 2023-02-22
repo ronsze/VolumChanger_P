@@ -6,15 +6,31 @@ plugins {
     id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
 }
 
+def secretsPropertiesFile = rootProject.file("secret.properties")
+def secretProperties = new Properties()
+
+if (secretsPropertiesFile.exists()) {
+    secretProperties.load(new FileInputStream(secretsPropertiesFile))
+}
+
 android {
     namespace 'com.sdbk.volumechanger'
     compileSdk 33
+
+    signingConfigs {
+        releaseWithSignedKey {
+            storeFile file("${secretProperties['store_file']}")
+            storePassword "${secretProperties['signing_keystore_password']}"
+            keyAlias "${secretProperties['signing_key_alias']}"
+            keyPassword "${secretProperties['signing_key_password']}"
+        }
+    }
 
     defaultConfig {
         applicationId "com.sdbk.volumechanger"
         minSdk 23
         targetSdk 33
-        versionCode 1
+        versionCode 4
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -24,9 +40,11 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.releaseWithSignedKey
         }
         debug {
             minifyEnabled false
+            signingConfig signingConfigs.releaseWithSignedKey
         }
     }
 

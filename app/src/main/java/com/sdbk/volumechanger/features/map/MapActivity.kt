@@ -123,7 +123,7 @@ class MapActivity: BaseActivity(), OnMapReadyCallback {
             if (!initialLayoutComplete) {
                 initialLayoutComplete = true
 
-                adView.adUnitId = "ca-app-pub-3940256099942544/6300978111"
+                adView.adUnitId = getString(R.string.admob_unit_id)
                 if (Build.VERSION.SDK_INT >= 30) adView.setAdSizes(adSize, AdSize.BANNER)
                 else adView.setAdSize(AdSize.BANNER)
 
@@ -243,16 +243,20 @@ class MapActivity: BaseActivity(), OnMapReadyCallback {
 
     private fun getCurrentLatLng(): android.location.Location? {
         val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager?
+
+        val isGPSEnable = locationManager?.isProviderEnabled(LocationManager.GPS_PROVIDER)
+        val isNetworkEnable = locationManager?.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+
+        if (isGPSEnable == false && isNetworkEnable == false) return null
+
         var currentLatLng: android.location.Location? = null
-        var hasFineLocationPermission = ContextCompat.checkSelfPermission(this,
-            Manifest.permission.ACCESS_FINE_LOCATION)
-        var hasCoarseLocationPermission = ContextCompat.checkSelfPermission(this,
-            Manifest.permission.ACCESS_COARSE_LOCATION)
+        val hasFineLocationPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+        val hasCoarseLocationPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
 
         currentLatLng = if (hasFineLocationPermission == PackageManager.PERMISSION_GRANTED &&
             hasCoarseLocationPermission == PackageManager.PERMISSION_GRANTED) {
-            val locationProvider = LocationManager.GPS_PROVIDER
-            locationManager?.getLastKnownLocation(locationProvider)
+            if (isGPSEnable == true) locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+            else locationManager?.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
         } else{
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, REQUIRED_PERMISSIONS[0])){
                 ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, PERMISSIONS_REQUEST_CODE)

@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
 import android.view.animation.AnimationUtils
@@ -110,7 +111,7 @@ class MainActivity : BaseActivity() {
             if (!initialLayoutComplete) {
                 initialLayoutComplete = true
 
-                adView.adUnitId = "ca-app-pub-3940256099942544/6300978111"
+                adView.adUnitId = getString(R.string.admob_unit_id)
                 if (Build.VERSION.SDK_INT >= 30) adView.setAdSizes(adSize, AdSize.BANNER)
                 else adView.setAdSize(AdSize.BANNER)
 

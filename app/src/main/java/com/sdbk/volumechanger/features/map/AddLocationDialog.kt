@@ -109,7 +109,7 @@ class AddLocationDialog(
                 substring(0, lastIndex).toInt()
             } ?: 100
             val location = Location(
-                latLng = "${String.format("%.3f", latLng.latitude)},${String.format("%.3f", latLng.longitude)}",
+                latLng = "${latLng.latitude},${latLng.longitude}",
                 name = binding.nameEdittext.text.toString().ifEmpty { "None" },
                 range = range,
                 bellVolume = bellVolume,

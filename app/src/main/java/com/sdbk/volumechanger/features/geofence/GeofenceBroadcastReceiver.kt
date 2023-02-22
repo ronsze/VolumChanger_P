@@ -75,8 +75,8 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                 }
                 else -> {
                     audioManager.ringerMode = AudioManager.RINGER_MODE_NORMAL
-                    audioManager.adjustStreamVolume(
-                        AudioManager.RINGER_MODE_NORMAL,
+                    audioManager.setStreamVolume(
+                        AudioManager.STREAM_RING,
                         (audioManager.getStreamMaxVolume(AudioManager.STREAM_RING) * (location.bellVolume / 100.0)).toInt(),
                         AudioManager.FLAG_PLAY_SOUND
                     )
@@ -85,12 +85,12 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
 
             when (location.mediaVolume) {
                 AddLocationDialog.VOLUME_MUTE -> {
-                    audioManager.adjustStreamVolume(
+                    audioManager.setStreamVolume(
                         AudioManager.STREAM_MUSIC, 0, AudioManager.FLAG_SHOW_UI
                     )
                 }
                 else -> {
-                    audioManager.adjustStreamVolume(
+                    audioManager.setStreamVolume(
                         AudioManager.STREAM_MUSIC,
                         (audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) * (location.mediaVolume / 100.0)).toInt(),
                         AudioManager.FLAG_SHOW_UI
