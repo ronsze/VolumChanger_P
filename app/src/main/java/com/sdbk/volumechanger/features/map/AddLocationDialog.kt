@@ -192,12 +192,15 @@ class AddLocationDialog(
             })
         } else {
             requireActivity().lifecycleScope.launch(Dispatchers.Main) {
-                var address = withContext(Dispatchers.Default) {
+                val address: CharSequence = withContext(Dispatchers.Default) {
                     val geocoder = Geocoder(requireActivity(), Locale.getDefault())
 
                     val addressList = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1)
-                    addressList?.first()?.getAddressLine(0)
-                } ?: ""
+                    addressList?.run {
+                        if (isNotEmpty()) first().getAddressLine(0)
+                        else ""
+                    } ?: ""
+                }
                 binding.locationTextview.text = address
             }
         }

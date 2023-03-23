@@ -37,7 +37,7 @@
                 android:id="@+id/location_place_holder"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="50dp"
+                android:layout_marginStart="20dp"
                 android:layout_marginTop="30dp"
                 android:layout_marginEnd="20dp"
                 android:text="@string/location"
@@ -86,7 +86,19 @@
                 app:layout_constraintStart_toStartOf="@id/location_place_holder"
                 app:layout_constraintTop_toBottomOf="@id/disturb_place_holder" />
 
+            <TextView
+                android:id="@+id/agreements_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginBottom="10dp"
+                android:text="@string/agreements"
+                app:layout_constraintBottom_toTopOf="@id/button_layout"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"/>
+
             <LinearLayout
+                android:id="@+id/button_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="15dp"

@@ -1,21 +1,23 @@
 package com.sdbk.volumechanger.base
 
-import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.os.PersistableBundle
-import android.telephony.TelephonyManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.sdbk.volumechanger.R
-import java.util.Locale
+import java.util.*
 
 abstract class BaseActivity: AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
-        super.onCreate(savedInstanceState, persistentState)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         setLanguage()
+        initData()
+        observeViewModel()
     }
+    abstract val viewModel: BaseViewModel
+    abstract fun initData()
+    abstract fun observeViewModel()
 
     protected fun startActivitySlide(intent: Intent) {
         startActivity(intent)
@@ -23,8 +25,7 @@ abstract class BaseActivity: AppCompatActivity() {
     }
 
     private fun setLanguage() {
-        val locale = if (Build.VERSION.SDK_INT >= 21) Locale.getDefault()
-        else Locale.US
+        val locale = Locale.getDefault()
 
         Locale.setDefault(locale)
         val config = resources.configuration

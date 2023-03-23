@@ -15,7 +15,12 @@
     <string name="vibration">진동</string>
     <string name="max">최대</string>
     <string name="requires_permissions">아래 권한이 필요합니다.</string>
-    <string name="location_body">사용자 위치를 얻기위해 사용</string>
+    <string name="location_body">VolumeChanger는 앱이 종료되어 있을 때에도 백그라운드 위치 데이터를 수집하여 볼륨 조절 기능을 지원합니다.</string>
     <string name="disturb_place_holder">방해 금지</string>
-    <string name="disturb_body">음량 조절을 위해 사용</string>
+    <string name="disturb_body">볼륨 조절을 위해 사용합니다.</string>
+    <string name="privacy_policy">개인 정보 처리 방침</string>
+    <string name="terms_of_use">이용 약관</string>
+    <string name="agreements"><font fgcolor='#21D5CB'><u><b>개인 정보 처리 방침</b></u></font> 및 <font fgcolor='#21D5CB'><u><b>이용 약관</b></u></font>에 동의하고 진행.</string>
+    <string name="empty_address">주소 필드가 비어 있습니다</string>
+    <string name="address_no_matching">일치하는 주소를 찾을 수 없습니다</string>
 </resources>

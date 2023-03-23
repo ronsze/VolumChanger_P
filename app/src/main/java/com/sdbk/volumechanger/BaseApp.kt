@@ -1,9 +1,9 @@
 package com.sdbk.volumechanger
 
 import android.app.Application
+import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.maps.MapsInitializer
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp

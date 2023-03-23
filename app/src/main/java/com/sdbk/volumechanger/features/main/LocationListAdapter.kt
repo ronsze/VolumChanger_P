@@ -2,6 +2,7 @@ package com.sdbk.volumechanger.features.main
 
 import android.content.Context
 import android.location.Geocoder
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -52,9 +53,8 @@ class LocationListAdapter(
 
     override fun getItemCount(): Int = locationList.count()
 
-    fun updateList(list: ArrayList<Location>) {
-        locationList.clear()
-        locationList.addAll(list)
+    fun updateList() {
+        notifyDataSetChanged()
     }
 
     private fun setAddressFromLatLng(latLngString: String, locationTextView: TextView) {

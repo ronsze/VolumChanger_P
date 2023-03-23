@@ -6,11 +6,18 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.Color
-import android.location.LocationManager
+import android.graphics.drawable.BitmapDrawable
 import android.os.Build
-import android.os.Bundle
+import android.os.Looper
+import android.util.Log
+import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
+import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -18,10 +25,7 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.admanager.AdManagerAdView
-import com.google.android.gms.location.Geofence
-import com.google.android.gms.location.GeofencingClient
-import com.google.android.gms.location.GeofencingRequest
-import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener
@@ -29,43 +33,45 @@ import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
+import com.sdbk.volumechanger.BuildConfig
 import com.sdbk.volumechanger.R
 import com.sdbk.volumechanger.base.BaseActivity
 import com.sdbk.volumechanger.databinding.ActivityMapBinding
 import com.sdbk.volumechanger.features.geofence.GeofenceBroadcastReceiver
 import com.sdbk.volumechanger.features.main.DeleteLocationDialog
 import com.sdbk.volumechanger.room.location.Location
-import com.sdbk.volumechanger.room.location.LocationDao
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 import kotlin.random.Random
 
 @SuppressLint("UnspecifiedImmutableFlag")
 @AndroidEntryPoint
-class MapActivity: BaseActivity(), OnMapReadyCallback {
+class MapActivity : BaseActivity(), OnMapReadyCallback {
     companion object {
         const val LAT_LNG = "lat_lng"
         private const val DEFAULT_LAT_LNG = "-33.852,151.211"
-        private const val DEFAULT_ZOOM = 14.5f
+        private const val DEFAULT_ZOOM = 15.5f
     }
 
-    private val context: Context = this
     private lateinit var binding: ActivityMapBinding
-    @Inject lateinit var locationDao: LocationDao
+    override val viewModel: MapViewModel by viewModels()
+
     private lateinit var googleMap: GoogleMap
-    private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
-    private val PERMISSIONS_REQUEST_CODE = 100
+    private val context: Context = this
 
     private lateinit var adContainerView: FrameLayout
     private var initialLayoutComplete = false
 
     private lateinit var geofencingClient: GeofencingClient
-    private val globalLocationList = ArrayList<Location>()
+    private lateinit var userMarker: Marker
     private val markerList = ArrayList<Marker?>()
     private val circleList = ArrayList<Circle>()
+
+    private lateinit var currentLocation: String
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private val geoPending: PendingIntent by lazy {
         val intent = Intent(this, GeofenceBroadcastReceiver::class.java)
@@ -76,29 +82,13 @@ class MapActivity: BaseActivity(), OnMapReadyCallback {
         }
     }
 
-    private val adSize: AdSize
-        @RequiresApi(Build.VERSION_CODES.R)
-        get() {
-            val windowMetrics = windowManager.currentWindowMetrics
-            val bounds = windowMetrics.bounds
-
-            var adWidthPixels = adContainerView.width.toFloat()
-
-            if (adWidthPixels == 0f) {
-                adWidthPixels = bounds.width().toFloat()
-            }
-
-            val density = resources.displayMetrics.density
-            val adWidth = (adWidthPixels/ density).toInt()
-
-            return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, adWidth)
-        }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun initData() {
         binding = ActivityMapBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        currentLocation = intent.getStringExtra("current_location") ?: DEFAULT_LAT_LNG
+        setViewEvents()
         loadAdv()
 
         geofencingClient = LocationServices.getGeofencingClient(this)
@@ -106,12 +96,60 @@ class MapActivity: BaseActivity(), OnMapReadyCallback {
         mapFragment?.getMapAsync(this)
     }
 
+    override fun observeViewModel() {
+        viewModel.initViewEvent.observe(this) {
+            initMarkers()
+            initCameraLocation()
+        }
+
+        viewModel.addLocationEvent.observe(this) { location ->
+            createMarker(location)
+            createCircle(location)
+            addGeofence(location)
+        }
+
+        viewModel.deleteLocationEvent.observe(this) { location ->
+            deleteMarker(location)
+            deleteCircle(location)
+            removeGeofences()
+        }
+
+        viewModel.showErrorToastEvent.observe(this) {
+            showErrorToast(it)
+        }
+
+        viewModel.moveCameraEvent.observe(this) {
+            changeCameraLocation(it.latitude, it.longitude)
+            setSearchMarker(it)
+        }
+
+        viewModel.searchDoneEvent.observe(this) {
+            binding.circleProgress.visibility = View.INVISIBLE
+            binding.icSearch.visibility = View.VISIBLE
+        }
+    }
+
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
         googleMap.setOnMapLongClickListener(onLongClickMap)
         googleMap.setOnMarkerClickListener(onClickMarker)
-        initMarkers()
-        initCameraLocation()
+
+        initUserMarker()
+        startLocationListener()
+        viewModel.loadData()
+        loadAdv()
+    }
+
+    private fun initUserMarker() {
+        val location = viewModel.getLatLngFromString(currentLocation)
+        val bitmapDraw = ContextCompat.getDrawable(this, R.drawable.ic_me_dot) as BitmapDrawable
+        val icon = Bitmap.createScaledBitmap(bitmapDraw.bitmap, 40, 40, false)
+        userMarker = googleMap.addMarker(
+            MarkerOptions()
+                .icon(BitmapDescriptorFactory.fromBitmap(icon))
+                .position(location)
+                .title("user")
+        )!!
     }
 
     private fun loadAdv() {
@@ -123,7 +161,9 @@ class MapActivity: BaseActivity(), OnMapReadyCallback {
             if (!initialLayoutComplete) {
                 initialLayoutComplete = true
 
-                adView.adUnitId = getString(R.string.admob_unit_id)
+                adView.adUnitId =
+                    if (BuildConfig.DEBUG) getString(R.string.admob_unit_id_test)
+                    else getString(R.string.admob_unit_id)
                 if (Build.VERSION.SDK_INT >= 30) adView.setAdSizes(adSize, AdSize.BANNER)
                 else adView.setAdSize(AdSize.BANNER)
 
@@ -136,25 +176,16 @@ class MapActivity: BaseActivity(), OnMapReadyCallback {
     }
 
     private fun initMarkers() {
-        lifecycleScope.launch(Dispatchers.Main) {
-            val locationList = withContext(Dispatchers.IO) {
-                locationDao.getAll()
-            }
-
-            locationList.let {
-                globalLocationList.clear()
-                globalLocationList.addAll(it)
-
-                it.forEach { location ->
-                    createMarker(location)
-                    createCircle(location)
-                }
+        viewModel.locationList.let {
+            it.forEach { location ->
+                createMarker(location)
+                createCircle(location)
             }
         }
     }
 
     private fun createMarker(location: Location) {
-        val latLng = getLatLngFromString(location.latLng)
+        val latLng = viewModel.getLatLngFromString(location.latLng)
         val lat = latLng.latitude
         val lng = latLng.longitude
 
@@ -168,7 +199,7 @@ class MapActivity: BaseActivity(), OnMapReadyCallback {
     }
 
     private fun createCircle(location: Location) {
-        val latLng = getLatLngFromString(location.latLng)
+        val latLng = viewModel.getLatLngFromString(location.latLng)
         val lat = latLng.latitude
         val lng = latLng.longitude
 
@@ -183,30 +214,6 @@ class MapActivity: BaseActivity(), OnMapReadyCallback {
         )
         circle.tag = location
         circleList.add(circle)
-    }
-
-    private fun addLocation(location: Location) {
-        lifecycleScope.launch(Dispatchers.Main) {
-            withContext(Dispatchers.IO) {
-                locationDao.insertLocation(location)
-            }
-            globalLocationList.add(location)
-            createMarker(location)
-            createCircle(location)
-            addGeofence(location)
-        }
-    }
-
-    private fun deleteLocation(location: Location) {
-        lifecycleScope.launch(Dispatchers.Main) {
-            withContext(Dispatchers.IO) {
-                locationDao.deleteLocationBy(location)
-            }
-            globalLocationList.remove(globalLocationList.first { it.latLng == location.latLng })
-            deleteMarker(location)
-            deleteCircle(location)
-            removeGeofences()
-        }
     }
 
     private fun deleteMarker(tag: Location) {
@@ -226,59 +233,24 @@ class MapActivity: BaseActivity(), OnMapReadyCallback {
     }
 
     private fun initCameraLocation() {
-        val latLng = getLatLngFromString(intent.getStringExtra(LAT_LNG) ?: getCurrentLocation())
+        val latLng =
+            viewModel.getLatLngFromString(intent.getStringExtra(LAT_LNG) ?: currentLocation)
         changeCameraLocation(latLng.latitude, latLng.longitude)
     }
 
-    private fun getCurrentLocation(): String {
-        val userLocation: android.location.Location? = getCurrentLatLng()
-        return if (userLocation != null) {
-            val lat = userLocation.latitude
-            val lng = userLocation.longitude
-            "$lat,$lng"
-        } else {
-            DEFAULT_LAT_LNG
-        }
-    }
-
-    private fun getCurrentLatLng(): android.location.Location? {
-        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager?
-
-        val isGPSEnable = locationManager?.isProviderEnabled(LocationManager.GPS_PROVIDER)
-        val isNetworkEnable = locationManager?.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-
-        if (isGPSEnable == false && isNetworkEnable == false) return null
-
-        var currentLatLng: android.location.Location? = null
-        val hasFineLocationPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-        val hasCoarseLocationPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-
-        currentLatLng = if (hasFineLocationPermission == PackageManager.PERMISSION_GRANTED &&
-            hasCoarseLocationPermission == PackageManager.PERMISSION_GRANTED) {
-            if (isGPSEnable == true) locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-            else locationManager?.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
-        } else{
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, REQUIRED_PERMISSIONS[0])){
-                ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, PERMISSIONS_REQUEST_CODE)
-            }else {
-                ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, PERMISSIONS_REQUEST_CODE)
-            }
-            getCurrentLatLng()
-        }
-        return currentLatLng
-    }
-
     private fun changeCameraLocation(lat: Double, lng: Double) {
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
-            LatLng(lat, lng), DEFAULT_ZOOM
-        ))
+        googleMap.moveCamera(
+            CameraUpdateFactory.newLatLngZoom(
+                LatLng(lat, lng), DEFAULT_ZOOM
+            )
+        )
     }
 
     private fun showAddLocationDialog(latLng: LatLng) {
         AddLocationDialog(latLng) {
-            val overlapList = getOverlapList(it)
+            val overlapList = viewModel.getOverlapList(it)
             if (overlapList.isEmpty()) {
-                addLocation(it)
+                viewModel.addLocation(it)
             } else {
                 var list = ""
                 overlapList.forEachIndexed { index, location ->
@@ -291,7 +263,7 @@ class MapActivity: BaseActivity(), OnMapReadyCallback {
     }
 
     private fun showDeleteDialog(location: Location) {
-        DeleteLocationDialog(location, this::deleteLocation).show(supportFragmentManager, "")
+        DeleteLocationDialog(location, viewModel::deleteLocation).show(supportFragmentManager, "")
     }
 
     private val onLongClickMap = OnMapLongClickListener {
@@ -299,42 +271,76 @@ class MapActivity: BaseActivity(), OnMapReadyCallback {
     }
 
     private val onClickMarker = OnMarkerClickListener {
-        showDeleteDialog(it.tag as Location)
+        if (it.tag != null) showDeleteDialog(it.tag as Location)
         false
     }
 
-    private fun getOverlapList(location: Location): ArrayList<Location> {
-        val overlapList = ArrayList<Location>()
-
-        val newLatLng = getLatLngFromString(location.latLng)
-        val newLocation = android.location.Location("new").apply {
-            latitude = newLatLng.latitude
-            longitude = newLatLng.longitude
-        }
-
-        globalLocationList.forEach {
-            val storedLatLng = getLatLngFromString(it.latLng)
-            val storedLocation = android.location.Location("stored").apply {
-                latitude = storedLatLng.latitude
-                longitude = storedLatLng.longitude
-            }
-
-            val distance = newLocation.distanceTo(storedLocation)
-            val maxDistance = (location.range + it.range) / 2.0
-
-            if (distance < maxDistance) {
-                overlapList.add(it)
+    private fun startLocationListener() {
+        val listener = object : LocationCallback() {
+            override fun onLocationResult(res: LocationResult) {
+                val location = res.locations.first()
+                userMarker.position = LatLng(location.latitude, location.longitude)
+                currentLocation = "${location.latitude},${location.longitude}"
             }
         }
 
-        return overlapList
+        val request =
+            LocationRequest.Builder(1000)
+                .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+                .build()
+
+
+        if (ActivityCompat.checkSelfPermission(this@MapActivity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+            && ActivityCompat.checkSelfPermission(this@MapActivity, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
+        ) { return }
+        fusedLocationClient.requestLocationUpdates(
+            request, listener, Looper.getMainLooper()
+        )
     }
 
-    private fun getLatLngFromString(str: String): LatLng {
-        val locationString = str.split(",")
-        val lat = locationString[0].toDouble()
-        val lng = locationString[1].toDouble()
-        return LatLng(lat, lng)
+
+    private fun setSearchMarker(latLng: LatLng) {
+        lifecycleScope.launch(Dispatchers.Main) {
+            val bitmapDraw = ContextCompat.getDrawable(this@MapActivity, R.drawable.ic_search) as BitmapDrawable
+            val icon = Bitmap.createScaledBitmap(bitmapDraw.bitmap, 80, 80, false)
+            val marker = googleMap.addMarker(
+                MarkerOptions()
+                    .icon(BitmapDescriptorFactory.fromBitmap(icon))
+                    .position(LatLng(latLng.latitude, latLng.longitude))
+            )
+
+            withContext(Dispatchers.Default) { delay(3000) }
+            marker?.remove()
+        }
+    }
+
+    private fun setViewEvents() {
+        binding.searchButtonLayout.setOnClickListener {
+            binding.icSearch.visibility = View.INVISIBLE
+            binding.circleProgress.visibility = View.VISIBLE
+
+            viewModel.searchAddress(binding.addressEdit.text.toString())
+            binding.addressEdit.setText("")
+            hideKeyboard()
+        }
+
+        binding.moveMeLayout.setOnClickListener {
+            moveCameraToMe()
+        }
+
+        binding.addressEdit.setOnEditorActionListener { textView, actionId, keyEvent ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                viewModel.searchAddress(binding.addressEdit.text.toString())
+                binding.addressEdit.setText("")
+                hideKeyboard()
+            }
+            false
+        }
+    }
+
+    private fun moveCameraToMe() {
+        val location = viewModel.getLatLngFromString(currentLocation)
+        changeCameraLocation(location.latitude, location.longitude)
     }
 
     private fun getRandomColor(): Int {
@@ -352,8 +358,16 @@ class MapActivity: BaseActivity(), OnMapReadyCallback {
     }
 
     private fun addGeofence(location: Location) {
-        val geofence = getGeofence(location.latLng, getLatLngFromString(location.latLng), location.range.toFloat())
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        val geofence = getGeofence(
+            location.latLng,
+            viewModel.getLatLngFromString(location.latLng),
+            location.range.toFloat()
+        )
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
             geofencingClient.addGeofences(getGeofencingRequest(geofence), geoPending).run {
                 addOnSuccessListener {}
                 addOnFailureListener {}
@@ -362,19 +376,20 @@ class MapActivity: BaseActivity(), OnMapReadyCallback {
     }
 
     private fun addGeofences() {
-        lifecycleScope.launch(Dispatchers.Main) {
-            val geofenceList = ArrayList<Geofence>()
-            val locationList = withContext(Dispatchers.IO) {
-                locationDao.getAll()
-            }
+        val geofenceList = ArrayList<Geofence>()
 
-            locationList.forEach {
-                geofenceList.add(
-                    getGeofence(it.latLng, getLatLngFromString(it.latLng), it.range.toFloat())
-                )
-            }
+        viewModel.locationList.forEach {
+            geofenceList.add(
+                getGeofence(it.latLng, viewModel.getLatLngFromString(it.latLng), it.range.toFloat())
+            )
+        }
 
-            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            if (geofenceList.isNotEmpty()) {
                 geofencingClient.addGeofences(getGeofencingRequest(geofenceList), geoPending).run {
                     addOnSuccessListener {}
                     addOnFailureListener {}
@@ -391,7 +406,7 @@ class MapActivity: BaseActivity(), OnMapReadyCallback {
             .setLoiteringDelay(60000)
             .setTransitionTypes(
                 Geofence.GEOFENCE_TRANSITION_ENTER
-                    or Geofence.GEOFENCE_TRANSITION_EXIT
+                        or Geofence.GEOFENCE_TRANSITION_EXIT
             ).build()
     }
 
@@ -400,7 +415,7 @@ class MapActivity: BaseActivity(), OnMapReadyCallback {
             addOnSuccessListener {
                 addGeofences()
             }
-            addOnFailureListener {  }
+            addOnFailureListener { }
         }
     }
 
@@ -418,9 +433,42 @@ class MapActivity: BaseActivity(), OnMapReadyCallback {
         }.build()
     }
 
+    private fun showErrorToast(errCode: Int) {
+        val text = when (errCode) {
+            MapViewModel.SEARCH_ERROR_NOT_MATCHING -> getString(R.string.address_no_matching)
+            MapViewModel.SEARCH_ERROR_EMPTY -> getString(R.string.empty_address)
+            else -> return
+        }
+
+        Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
+    }
+
     override fun finish() {
         val data = Intent()
         setResult(RESULT_OK, data)
         super.finish()
+    }
+
+    private val adSize: AdSize
+        @RequiresApi(Build.VERSION_CODES.R)
+        get() {
+            val windowMetrics = windowManager.currentWindowMetrics
+            val bounds = windowMetrics.bounds
+
+            var adWidthPixels = adContainerView.width.toFloat()
+
+            if (adWidthPixels == 0f) {
+                adWidthPixels = bounds.width().toFloat()
+            }
+
+            val density = resources.displayMetrics.density
+            val adWidth = (adWidthPixels / density).toInt()
+
+            return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, adWidth)
+        }
+
+    private fun hideKeyboard() {
+        val imm: InputMethodManager = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(binding.addressEdit.windowToken, 0);
     }
 }
