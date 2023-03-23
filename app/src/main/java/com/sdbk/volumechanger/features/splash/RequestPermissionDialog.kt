@@ -15,7 +15,6 @@ import androidx.fragment.app.DialogFragment
 import com.sdbk.volumechanger.R
 import com.sdbk.volumechanger.databinding.DialogRequestPermissionBinding
 import com.sdbk.volumechanger.features.agreements.PrivacyPolicyActivity
-import com.sdbk.volumechanger.features.agreements.TermsOfUseActivity
 
 class RequestPermissionDialog(
     private val onClickNo: () -> Unit,
@@ -49,14 +48,10 @@ class RequestPermissionDialog(
     }
 
     private fun setPolicyTextClickEvent() {
-        val termsOfUseSpanString = resources.getString(R.string.terms_of_use)
         val privacyPolicySpanString = resources.getString(R.string.privacy_policy)
         val policyStringSpan = SpannableString(binding.agreementsText.text).apply {
-            var start = this.indexOf(termsOfUseSpanString)
-            var end = start + termsOfUseSpanString.length
-            setSpan(onClickTermsOfUseClickListener, start, end, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE)
-            start = this.indexOf(privacyPolicySpanString)
-            end = start + privacyPolicySpanString.length
+            val start = this.indexOf(privacyPolicySpanString)
+            val end = start + privacyPolicySpanString.length
             setSpan(onClickPrivacyPolicyClickListener, start, end, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
 
@@ -67,23 +62,11 @@ class RequestPermissionDialog(
         }
     }
 
-    private val onClickTermsOfUseClickListener = object : ClickableSpan() {
-        override fun onClick(view: View) {
-            goToTermsOfUse()
-        }
-        override fun updateDrawState(ds: TextPaint) {}
-    }
-
     private val onClickPrivacyPolicyClickListener = object : ClickableSpan() {
         override fun onClick(view: View) {
             goToPrivacyPolicy()
         }
         override fun updateDrawState(ds: TextPaint) {}
-    }
-
-    private fun goToTermsOfUse() {
-        val intent = Intent(requireActivity(), TermsOfUseActivity::class.java)
-        startActivity(intent)
     }
 
     private fun goToPrivacyPolicy() {

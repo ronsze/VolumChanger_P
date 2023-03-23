@@ -24,8 +24,7 @@
     <string name="disturb_body">Use for volume adjustment</string>
 
     <string name="privacy_policy">Privacy policy</string>
-    <string name="terms_of_use">Terms of Use</string>
-    <string name="agreements">Accept and proceed with the <font fgcolor='#21D5CB'><u><b>Privacy policy</b></u></font> and <font fgcolor='#21D5CB'><u><b>Terms of Use</b></u></font>.</string>
+    <string name="agreements">Accept and proceed with the <font fgcolor='#21D5CB'><u><b>Privacy policy</b></u></font>.</string>
 
     <string-array name="range_array">
         <item>100M</item>
