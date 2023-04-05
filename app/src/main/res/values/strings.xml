@@ -19,7 +19,7 @@
     <string name="max">Max</string>
 
     <string name="requires_permissions">Requires permission below</string>
-    <string name="location_body">VolumeChanger supports volume control by collecting background location data even when the app is shut down.</string>
+    <string name="location_body">VolumeChanger always collects background location data for users, even when the app is shut down or not in use, enabling user background location-based volume throttling.</string>
     <string name="disturb_place_holder">Do Not Disturb access</string>
     <string name="disturb_body">Use for volume adjustment</string>
 

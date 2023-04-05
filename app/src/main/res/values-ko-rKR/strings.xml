@@ -15,7 +15,7 @@
     <string name="vibration">진동</string>
     <string name="max">최대</string>
     <string name="requires_permissions">아래 권한이 필요합니다.</string>
-    <string name="location_body">VolumeChanger는 앱이 종료되어 있을 때에도 백그라운드 위치 데이터를 수집하여 볼륨 조절 기능을 지원합니다.</string>
+    <string name="location_body">VolumeChanger는 앱이 종료되었거나 사용 중이 아닐 때도 항상 사용자의 백그라운드 위치 데이터를 수집하여 사용자 백그라운드 위치 기반 볼륨 조절 기능을 지원합니다.</string>
     <string name="disturb_place_holder">방해 금지</string>
     <string name="disturb_body">볼륨 조절을 위해 사용합니다.</string>
     <string name="privacy_policy">개인 정보 처리 방침</string>
