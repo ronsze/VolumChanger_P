@@ -15,7 +15,7 @@ interface LocationDao {
     fun getLocationBy(latitude: Float, longitude: Float): List<LocationEntity>
 
     @Insert
-    fun insertLocation(location: LocationEntity)
+    fun insertLocation(location: LocationEntity): LocationEntity
 
     @Delete
     fun deleteLocationBy(location: LocationEntity)

@@ -3,24 +3,18 @@ package com.sdbk.volumechanger.features.main
 import android.app.AlertDialog
 import android.content.Intent
 import android.view.LayoutInflater
-import android.view.animation.AnimationUtils
 import androidx.activity.viewModels
-import androidx.lifecycle.lifecycleScope
-import com.google.android.gms.location.*
 import com.sdbk.domain.Constants.LOCATION
 import com.sdbk.domain.Constants.LOCATION_LIST
 import com.sdbk.domain.location.LocationEntity
 import com.sdbk.volumechanger.R
 import com.sdbk.volumechanger.base.BaseActivity
 import com.sdbk.volumechanger.databinding.ActivityMainBinding
-import com.sdbk.volumechanger.features.main.recycler.LocationListAdapter
+import com.sdbk.volumechanger.features.main.adapter.LocationListAdapter
 import com.sdbk.volumechanger.features.map.MapActivity
+import com.sdbk.volumechanger.module.GeofenceModule
 import com.sdbk.volumechanger.util.getSerializable
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @AndroidEntryPoint
 class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
@@ -35,14 +29,14 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
         viewModel.updateList()
     }
 
+    private val geofenceModule = GeofenceModule(this)
+
     override fun initData() {
         viewModel.setData(intent.getSerializable(LOCATION_LIST))
         binding.locationRecyclerView.adapter = locationListAdapter
     }
 
-    override fun observeViewModel() {
-
-    }
+    override fun observeViewModel() {}
 
     override fun setClickEvents() {
         binding.addButton.setOnClickListener { navigateToMap() }
@@ -52,7 +46,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.delete_location_text))
             .setMessage(location.name)
-            .setPositiveButton(getString(R.string.just_yes)) { _, _ ->  }
+            .setPositiveButton(getString(R.string.just_yes)) { _, _ -> removeGeofence(location.id.toString()) }
             .setNegativeButton(getString(R.string.just_No)) { dialog, _ -> dialog.dismiss() }
             .create()
             .show()
@@ -63,5 +57,11 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
         intent.putExtra(LOCATION, location)
         mapResultLauncher.launch(intent)
         overridePendingTransition(R.anim.anim_slide_right, R.anim.anim_slide_left)
+    }
+
+    private fun removeGeofence(id: String) {
+        geofenceModule.removeGeofence(listOf(id), {
+            showToast(getString(R.string.location_removed))
+        })
     }
 }

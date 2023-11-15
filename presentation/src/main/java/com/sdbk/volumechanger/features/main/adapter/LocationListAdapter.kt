@@ -1,7 +1,6 @@
-package com.sdbk.volumechanger.features.main.recycler
+package com.sdbk.volumechanger.features.main.adapter
 
 import android.content.Context
-import android.location.Geocoder
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -11,8 +10,6 @@ import com.sdbk.volumechanger.util.latLngToAddress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.util.Locale
 
 class LocationListAdapter(
     private val locationList: List<LocationEntity>,

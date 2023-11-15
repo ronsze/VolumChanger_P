@@ -5,7 +5,7 @@ import android.content.Intent
 import android.location.Geocoder
 import android.os.Build
 import com.google.android.gms.maps.model.LatLng
-import com.sdbk.data.exceptions.NoExtraFoundMatchingKeyException
+import com.sdbk.domain.exceptions.NoExtraFoundMatchingKeyException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

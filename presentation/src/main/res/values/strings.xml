@@ -42,4 +42,5 @@
     <string name="address_no_matching">No matching addresses found</string>
 
     <string name="click_ok" translatable="false">click_ok</string>
+    <string name="location_removed">The location has been removed</string>
 </resources>

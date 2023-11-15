@@ -22,4 +22,5 @@
     <string name="agreements"><font fgcolor='#21D5CB'><u><b>개인 정보 처리 방침</b></u></font>에 동의하고 진행.</string>
     <string name="empty_address">주소 필드가 비어 있습니다</string>
     <string name="address_no_matching">일치하는 주소를 찾을 수 없습니다</string>
+    <string name="location_removed">위치가 제거되었습니다.</string>
 </resources>
