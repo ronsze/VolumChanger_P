@@ -7,6 +7,7 @@ import androidx.activity.viewModels
 import com.sdbk.domain.Constants.LOCATION
 import com.sdbk.domain.Constants.LOCATION_LIST
 import com.sdbk.domain.location.LocationEntity
+import com.sdbk.domain.location.LocationListWrapper
 import com.sdbk.volumechanger.R
 import com.sdbk.volumechanger.base.BaseActivity
 import com.sdbk.volumechanger.databinding.ActivityMainBinding
@@ -36,7 +37,13 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
         binding.locationRecyclerView.adapter = locationListAdapter
     }
 
-    override fun observeViewModel() {}
+    override fun observeViewModel() {
+        viewModel.removeGeofenceEvent.observe(this) {
+            geofenceModule.removeGeofence(listOf(it.toString()), {
+                showToast(getString(R.string.location_removed))
+            })
+        }
+    }
 
     override fun setClickEvents() {
         binding.addButton.setOnClickListener { navigateToMap() }
@@ -46,7 +53,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.delete_location_text))
             .setMessage(location.name)
-            .setPositiveButton(getString(R.string.just_yes)) { _, _ -> removeGeofence(location.id.toString()) }
+            .setPositiveButton(getString(R.string.just_yes)) { _, _ -> viewModel.deleteLocation(location) }
             .setNegativeButton(getString(R.string.just_No)) { dialog, _ -> dialog.dismiss() }
             .create()
             .show()
@@ -55,13 +62,8 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
     private fun navigateToMap(location: LocationEntity? = null) {
         val intent = Intent(this, MapActivity::class.java)
         intent.putExtra(LOCATION, location)
+        intent.putExtra(LOCATION_LIST, LocationListWrapper(ArrayList(viewModel.locationList)))
         mapResultLauncher.launch(intent)
         overridePendingTransition(R.anim.anim_slide_right, R.anim.anim_slide_left)
-    }
-
-    private fun removeGeofence(id: String) {
-        geofenceModule.removeGeofence(listOf(id), {
-            showToast(getString(R.string.location_removed))
-        })
     }
 }

@@ -26,12 +26,19 @@ abstract class BaseActivity<B: ViewBinding, V: BaseViewModel> : AppCompatActivit
         setLanguage()
         initData()
         observeViewModel()
+        observeGlobal()
         setClickEvents()
         setFragmentResultListener()
     }
 
     abstract fun initData()
     abstract fun observeViewModel()
+
+    private fun observeGlobal() {
+        viewModel.showToastEvent.observe(this) {
+            showToast(it)
+        }
+    }
 
     private fun setLanguage() {
         val locale = Locale.getDefault()

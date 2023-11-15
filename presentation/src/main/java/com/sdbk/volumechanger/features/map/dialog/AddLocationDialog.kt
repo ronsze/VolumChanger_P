@@ -17,17 +17,17 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.model.LatLng
+import com.sdbk.domain.location.LocationEntity
 import com.sdbk.volumechanger.R
 import com.sdbk.volumechanger.databinding.DialogAddLocationBinding
-import com.sdbk.domain.location.Location
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
 
 class AddLocationDialog(
-    private val latLng: LatLng,
-    private val onClickAdd: (com.sdbk.domain.location.Location) -> Unit
+    private val coordinate: LatLng,
+    private val onClickAdd: (LocationEntity) -> Unit
 ): DialogFragment() {
     companion object {
         const val VOLUME_MUTE = -1
@@ -105,8 +105,9 @@ class AddLocationDialog(
             val range = rangeSpinnerAdapter.getItem(binding.rangeSpinner.selectedItemPosition)?.run {
                 substring(0, lastIndex).toInt()
             } ?: 100
-            val location = com.sdbk.domain.location.Location(
-                latLng = "${latLng.latitude},${latLng.longitude}",
+            val location = LocationEntity(
+                latitude = coordinate.latitude,
+                longitude = coordinate.longitude,
                 name = binding.nameEdittext.text.toString().ifEmpty { "None" },
                 range = range,
                 bellVolume = bellVolume,
@@ -181,7 +182,7 @@ class AddLocationDialog(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val geocoder = Geocoder(requireActivity(), Locale.getDefault())
 
-            geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1, GeocodeListener {
+            geocoder.getFromLocation(coordinate.latitude, coordinate.longitude, 1, GeocodeListener {
                 val address = it.first().getAddressLine(0)
                 lifecycleScope.launch(Dispatchers.Main) {
                     binding.locationTextview.text = address
@@ -192,7 +193,7 @@ class AddLocationDialog(
                 val address: CharSequence = withContext(Dispatchers.Default) {
                     val geocoder = Geocoder(requireActivity(), Locale.getDefault())
 
-                    val addressList = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1)
+                    val addressList = geocoder.getFromLocation(coordinate.latitude, coordinate.longitude, 1)
                     addressList?.run {
                         if (isNotEmpty()) first().getAddressLine(0)
                         else ""
