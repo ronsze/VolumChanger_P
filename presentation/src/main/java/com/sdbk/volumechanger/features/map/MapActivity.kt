@@ -11,7 +11,6 @@ import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import android.os.Looper
-import android.util.Log
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
@@ -37,9 +36,9 @@ import com.sdbk.volumechanger.BuildConfig
 import com.sdbk.volumechanger.R
 import com.sdbk.volumechanger.base.BaseActivity
 import com.sdbk.volumechanger.databinding.ActivityMapBinding
-import com.sdbk.volumechanger.features.geofence.GeofenceBroadcastReceiver
-import com.sdbk.volumechanger.features.main.DeleteLocationDialog
-import com.sdbk.volumechanger.room.location.Location
+import com.sdbk.volumechanger.broadcast.GeofenceBroadcastReceiver
+import com.sdbk.domain.location.Location
+import com.sdbk.volumechanger.features.map.dialog.AddLocationDialog
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -184,7 +183,7 @@ class MapActivity : BaseActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun createMarker(location: Location) {
+    private fun createMarker(location: com.sdbk.domain.location.Location) {
         val latLng = viewModel.getLatLngFromString(location.latLng)
         val lat = latLng.latitude
         val lng = latLng.longitude
@@ -198,7 +197,7 @@ class MapActivity : BaseActivity(), OnMapReadyCallback {
         markerList.add(marker)
     }
 
-    private fun createCircle(location: Location) {
+    private fun createCircle(location: com.sdbk.domain.location.Location) {
         val latLng = viewModel.getLatLngFromString(location.latLng)
         val lat = latLng.latitude
         val lng = latLng.longitude
@@ -216,7 +215,7 @@ class MapActivity : BaseActivity(), OnMapReadyCallback {
         circleList.add(circle)
     }
 
-    private fun deleteMarker(tag: Location) {
+    private fun deleteMarker(tag: com.sdbk.domain.location.Location) {
         try {
             markerList.first { it?.tag == tag }?.remove()
         } catch (e: java.util.NoSuchElementException) {
@@ -224,7 +223,7 @@ class MapActivity : BaseActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun deleteCircle(tag: Location) {
+    private fun deleteCircle(tag: com.sdbk.domain.location.Location) {
         try {
             circleList.first { it.tag == tag }.remove()
         } catch (e: java.util.NoSuchElementException) {
@@ -262,7 +261,7 @@ class MapActivity : BaseActivity(), OnMapReadyCallback {
         }.show(supportFragmentManager, "")
     }
 
-    private fun showDeleteDialog(location: Location) {
+    private fun showDeleteDialog(location: com.sdbk.domain.location.Location) {
         DeleteLocationDialog(location, viewModel::deleteLocation).show(supportFragmentManager, "")
     }
 
@@ -271,7 +270,7 @@ class MapActivity : BaseActivity(), OnMapReadyCallback {
     }
 
     private val onClickMarker = OnMarkerClickListener {
-        if (it.tag != null) showDeleteDialog(it.tag as Location)
+        if (it.tag != null) showDeleteDialog(it.tag as com.sdbk.domain.location.Location)
         false
     }
 
@@ -357,7 +356,7 @@ class MapActivity : BaseActivity(), OnMapReadyCallback {
         return ContextCompat.getColor(this, colorId)
     }
 
-    private fun addGeofence(location: Location) {
+    private fun addGeofence(location: com.sdbk.domain.location.Location) {
         val geofence = getGeofence(
             location.latLng,
             viewModel.getLatLngFromString(location.latLng),

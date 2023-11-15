@@ -1,12 +1,10 @@
-package com.sdbk.volumechanger.features.map
+package com.sdbk.volumechanger.features.map.dialog
 
 import android.app.Dialog
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.location.Address
 import android.location.Geocoder
 import android.location.Geocoder.GeocodeListener
-import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -21,8 +19,7 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.model.LatLng
 import com.sdbk.volumechanger.R
 import com.sdbk.volumechanger.databinding.DialogAddLocationBinding
-import com.sdbk.volumechanger.room.location.Location
-import kotlinx.coroutines.CoroutineScope
+import com.sdbk.domain.location.Location
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -30,7 +27,7 @@ import java.util.Locale
 
 class AddLocationDialog(
     private val latLng: LatLng,
-    private val onClickAdd: (Location) -> Unit
+    private val onClickAdd: (com.sdbk.domain.location.Location) -> Unit
 ): DialogFragment() {
     companion object {
         const val VOLUME_MUTE = -1
@@ -108,7 +105,7 @@ class AddLocationDialog(
             val range = rangeSpinnerAdapter.getItem(binding.rangeSpinner.selectedItemPosition)?.run {
                 substring(0, lastIndex).toInt()
             } ?: 100
-            val location = Location(
+            val location = com.sdbk.domain.location.Location(
                 latLng = "${latLng.latitude},${latLng.longitude}",
                 name = binding.nameEdittext.text.toString().ifEmpty { "None" },
                 range = range,

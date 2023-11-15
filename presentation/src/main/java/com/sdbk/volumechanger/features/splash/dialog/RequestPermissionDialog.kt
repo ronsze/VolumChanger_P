@@ -1,4 +1,4 @@
-package com.sdbk.volumechanger.features.splash
+package com.sdbk.volumechanger.features.splash.dialog
 
 import android.content.Intent
 import android.graphics.Color
@@ -11,15 +11,15 @@ import android.text.style.ClickableSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.setFragmentResult
 import com.sdbk.volumechanger.R
 import com.sdbk.volumechanger.databinding.DialogRequestPermissionBinding
 import com.sdbk.volumechanger.features.agreements.PrivacyPolicyActivity
+import kotlin.system.exitProcess
 
-class RequestPermissionDialog(
-    private val onClickNo: () -> Unit,
-    private val onClickYes: () -> Unit
-): DialogFragment() {
+class RequestPermissionDialog: DialogFragment() {
     private lateinit var binding: DialogRequestPermissionBinding
 
     override fun onCreateView(
@@ -30,21 +30,23 @@ class RequestPermissionDialog(
         binding = DialogRequestPermissionBinding.inflate(inflater, container, false)
         binding.root.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         dialog?.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-
-        binding.noButton.setOnClickListener {
-            onClickNo()
-        }
-
-        binding.yesButton.setOnClickListener {
-            onClickYes()
-            dialog?.dismiss()
-        }
-
         isCancelable = false
 
+        setClickEvents()
         setPolicyTextClickEvent()
 
         return binding.root
+    }
+
+    private fun setClickEvents() {
+        binding.noButton.setOnClickListener {
+            exitProcess(0)
+        }
+
+        binding.yesButton.setOnClickListener {
+            setFragmentResult(getString(R.string.click_ok), bundleOf())
+            dismiss()
+        }
     }
 
     private fun setPolicyTextClickEvent() {

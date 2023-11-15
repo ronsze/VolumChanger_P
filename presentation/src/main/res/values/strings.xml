@@ -40,4 +40,6 @@
     <string name="admob_interstitial_id" translatable="false">ca-app-pub-6488007692272272/2205043626</string>
     <string name="empty_address">address field is empty</string>
     <string name="address_no_matching">No matching addresses found</string>
+
+    <string name="click_ok" translatable="false">click_ok</string>
 </resources>

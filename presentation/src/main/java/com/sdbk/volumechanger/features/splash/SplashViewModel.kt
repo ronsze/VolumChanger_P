@@ -2,9 +2,9 @@ package com.sdbk.volumechanger.features.splash
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
+import com.sdbk.domain.dao.location.LocationDao
+import com.sdbk.domain.location.LocationEntity
 import com.sdbk.volumechanger.base.BaseViewModel
-import com.sdbk.volumechanger.room.location.Location
-import com.sdbk.volumechanger.room.location.LocationDao
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -16,18 +16,15 @@ import javax.inject.Inject
 class SplashViewModel @Inject constructor(
     private val locationDao: LocationDao
 ): BaseViewModel() {
-    private val _goToMainEvent = SingleLiveEvent<Void>()
-    val goToMainEvent: LiveData<Void> get() = _goToMainEvent
+    private val _navigateToMainEvent = SingleLiveEvent<Void>()
+    val navigateToMainEvent: LiveData<Void> get() = _navigateToMainEvent
 
-    val locationList = ArrayList<Location>()
+    val locationList = ArrayList<LocationEntity>()
 
     fun loadData() {
         viewModelScope.launch(Dispatchers.Main) {
-            withContext(Dispatchers.IO) {
-                locationList.addAll(locationDao.getAll())
-            }
-
-            _goToMainEvent.call()
+            withContext(Dispatchers.IO) { locationList.addAll(locationDao.getAll()) }
+            _navigateToMainEvent.call()
         }
     }
 }

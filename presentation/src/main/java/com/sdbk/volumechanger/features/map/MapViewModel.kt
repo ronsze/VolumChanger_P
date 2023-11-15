@@ -3,15 +3,13 @@ package com.sdbk.volumechanger.features.map
 import android.app.Application
 import android.location.Address
 import android.location.Geocoder
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
 import com.sdbk.volumechanger.base.BaseViewModel
-import com.sdbk.volumechanger.room.location.Location
-import com.sdbk.volumechanger.room.location.LocationDao
+import com.sdbk.domain.location.Location
+import com.sdbk.domain.dao.location.LocationDao
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -22,23 +20,23 @@ import javax.inject.Inject
 @HiltViewModel
 class MapViewModel @Inject constructor(
     private val application: Application,
-    private val locationDao: LocationDao
+    private val locationDao: com.sdbk.domain.dao.location.LocationDao
 ): BaseViewModel() {
     companion object {
         const val SEARCH_ERROR_NOT_MATCHING = 0
         const val SEARCH_ERROR_EMPTY = 1
     }
 
-    var locationList = ArrayList<Location>()
+    var locationList = ArrayList<com.sdbk.domain.location.Location>()
 
     private val _initViewEvent = SingleLiveEvent<Void>()
     val initViewEvent: LiveData<Void> get() = _initViewEvent
 
-    private val _addLocationEvent = SingleLiveEvent<Location>()
-    val addLocationEvent: LiveData<Location> get() = _addLocationEvent
+    private val _addLocationEvent = SingleLiveEvent<com.sdbk.domain.location.Location>()
+    val addLocationEvent: LiveData<com.sdbk.domain.location.Location> get() = _addLocationEvent
 
-    private val _deleteLocationEvent = SingleLiveEvent<Location>()
-    val deleteLocationEvent: LiveData<Location> get() = _deleteLocationEvent
+    private val _deleteLocationEvent = SingleLiveEvent<com.sdbk.domain.location.Location>()
+    val deleteLocationEvent: LiveData<com.sdbk.domain.location.Location> get() = _deleteLocationEvent
 
     private val _showErrorToastEvent = SingleLiveEvent<Int>()
     val showErrorToastEvent: LiveData<Int> get() = _showErrorToastEvent
@@ -60,7 +58,7 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    fun addLocation(location: Location) {
+    fun addLocation(location: com.sdbk.domain.location.Location) {
         viewModelScope.launch(Dispatchers.Main) {
             withContext(Dispatchers.IO) {
                 locationList.add(location)
@@ -71,7 +69,7 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    fun deleteLocation(location: Location) {
+    fun deleteLocation(location: com.sdbk.domain.location.Location) {
         viewModelScope.launch(Dispatchers.Main) {
             withContext(Dispatchers.IO) {
                 locationList.remove(location)
@@ -82,8 +80,8 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    fun getOverlapList(location: Location): ArrayList<Location> {
-        val overlapList = ArrayList<Location>()
+    fun getOverlapList(location: com.sdbk.domain.location.Location): ArrayList<com.sdbk.domain.location.Location> {
+        val overlapList = ArrayList<com.sdbk.domain.location.Location>()
 
         val newLatLng = getLatLngFromString(location.latLng)
         val newLocation = android.location.Location("new").apply {

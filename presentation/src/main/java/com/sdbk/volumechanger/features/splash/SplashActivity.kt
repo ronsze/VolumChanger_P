@@ -8,42 +8,94 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
+import android.view.LayoutInflater
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.app.ActivityCompat
+import com.sdbk.domain.Constants.LOCATION_LIST
+import com.sdbk.domain.location.LocationListWrapper
+import com.sdbk.volumechanger.R
 import com.sdbk.volumechanger.base.BaseActivity
-import com.sdbk.volumechanger.data.LocationData
 import com.sdbk.volumechanger.databinding.ActivitySplashBinding
 import com.sdbk.volumechanger.features.main.MainActivity
+import com.sdbk.volumechanger.features.splash.dialog.RequestPermissionDialog
 import dagger.hilt.android.AndroidEntryPoint
 import kotlin.system.exitProcess
 
 @AndroidEntryPoint
 @SuppressLint("CustomSplashScreen")
-class SplashActivity : BaseActivity() {
-    private lateinit var binding: ActivitySplashBinding
+class SplashActivity : BaseActivity<ActivitySplashBinding, SplashViewModel>() {
+    companion object {
+        private const val FINE_LOCATION_REQUEST_CODE = 100
+        private const val BACKGROUND_LOCATION_REQUEST_CODE = 101
+    }
+
+    override val bindingInflater: (LayoutInflater) -> ActivitySplashBinding = ActivitySplashBinding::inflate
     override val viewModel: SplashViewModel by viewModels()
 
-    private val requestPermissionDialog = RequestPermissionDialog({exitProcess(0)}, this::requestFineLocationPermission)
-    override fun initData() {
-        binding = ActivitySplashBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+    private val requestPermissionDialog = RequestPermissionDialog()
 
+    private val volumePermissionResultLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        requestVolumeChangePermission()
+    }
+
+    override fun initData() {
         checkPermissions()
     }
 
     override fun observeViewModel() {
-        viewModel.goToMainEvent.observe(this) {
-            goToMain()
+        viewModel.navigateToMainEvent.observe(this) {
+            navigateToMain()
+        }
+    }
+
+    override fun setFragmentResultListener() {
+        supportFragmentManager.setFragmentResultListener(getString(R.string.click_ok), this) { _, _ ->
+            requestFineLocationPermission()
         }
     }
 
     private fun checkPermissions() {
-        if (getPermissionsGranted()) {
-            viewModel.loadData()
+        if (getPermissionsGranted()) viewModel.loadData()
+        else requestPermissionDialog.show(supportFragmentManager, requestPermissionDialog.tag)
+    }
+
+    private fun requestFineLocationPermission() {
+        val permissions = arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+        )
+        ActivityCompat.requestPermissions(this, permissions, FINE_LOCATION_REQUEST_CODE)
+    }
+
+    private fun requestBackgroundLocationPermission() {
+        if (Build.VERSION.SDK_INT >= 29) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
+                BACKGROUND_LOCATION_REQUEST_CODE
+            )
         } else {
-            requestPermissionDialog.show(supportFragmentManager, requestPermissionDialog.tag)
+            requestVolumeChangePermission()
         }
+    }
+
+    private fun requestVolumeChangePermission() {
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if (!notificationManager.isNotificationPolicyAccessGranted) {
+            volumePermissionResultLauncher.launch(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+        } else {
+            viewModel.loadData()
+        }
+    }
+
+    private fun navigateToMain() {
+        val intent = Intent(this, MainActivity::class.java)
+        intent.putExtra(LOCATION_LIST, LocationListWrapper(viewModel.locationList))
+        startActivitySlide(intent)
+        finish()
     }
 
     private fun getPermissionsGranted(): Boolean {
@@ -59,42 +111,6 @@ class SplashActivity : BaseActivity() {
         return permissionsGranted
     }
 
-    private fun requestFineLocationPermission() {
-        val permissions = arrayOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-        )
-        ActivityCompat.requestPermissions(this, permissions, 100)
-    }
-
-    private fun requestBackgroundLocationPermission() {
-        if (Build.VERSION.SDK_INT >= 29) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
-                101
-            )
-        } else {
-            viewModel.loadData()
-        }
-    }
-
-    private val volumePermissionResultLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) {
-        requestVolumeChangePermission()
-    }
-
-    private fun requestVolumeChangePermission() {
-        val notificationManager =
-            this.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        if (!notificationManager.isNotificationPolicyAccessGranted) {
-            volumePermissionResultLauncher.launch(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
-        } else {
-            viewModel.loadData()
-        }
-    }
-
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -103,14 +119,14 @@ class SplashActivity : BaseActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
         when (requestCode) {
-            100 -> {
+            FINE_LOCATION_REQUEST_CODE -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     requestBackgroundLocationPermission()
                 } else {
                     exitProcess(0)
                 }
             }
-            101 -> {
+            BACKGROUND_LOCATION_REQUEST_CODE -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     requestVolumeChangePermission()
                 } else {
@@ -118,12 +134,5 @@ class SplashActivity : BaseActivity() {
                 }
             }
         }
-    }
-
-    private fun goToMain() {
-        val intent = Intent(this, MainActivity::class.java)
-        intent.putExtra(MainActivity.LOCATION_LIST, LocationData(viewModel.locationList))
-        startActivitySlide(intent)
-        finish()
     }
 }

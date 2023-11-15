@@ -1,4 +1,4 @@
-package com.sdbk.volumechanger.features.geofence
+package com.sdbk.volumechanger.broadcast
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -9,8 +9,8 @@ import androidx.room.Room
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.location.GeofencingEvent
-import com.sdbk.volumechanger.features.map.AddLocationDialog
-import com.sdbk.volumechanger.room.location.LocationDatabase
+import com.sdbk.volumechanger.features.map.dialog.AddLocationDialog
+import com.sdbk.data.database.LocationDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -57,7 +57,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
     }
 
     private fun volumeChange(id: String, context: Context) {
-        val locationDao = Room.databaseBuilder(context, LocationDatabase::class.java, "location_database").build().locationDao()
+        val locationDao = Room.databaseBuilder(context, com.sdbk.data.database.LocationDatabase::class.java, "location_database").build().locationDao()
         val audioManager: AudioManager = context.applicationContext?.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
         CoroutineScope(Dispatchers.Main).launch {

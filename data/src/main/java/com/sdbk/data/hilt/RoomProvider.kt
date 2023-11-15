@@ -1,9 +1,9 @@
-package com.sdbk.volumechanger.hilt
+package com.sdbk.data.hilt
 
 import android.content.Context
 import androidx.room.Room
-import com.sdbk.volumechanger.room.location.LocationDao
-import com.sdbk.volumechanger.room.location.LocationDatabase
+import com.sdbk.data.database.LocationDatabase
+import com.sdbk.domain.dao.location.LocationDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
