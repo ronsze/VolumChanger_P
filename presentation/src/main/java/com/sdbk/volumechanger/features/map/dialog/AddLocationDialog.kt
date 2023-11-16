@@ -20,6 +20,8 @@ import com.google.android.gms.maps.model.LatLng
 import com.sdbk.domain.location.LocationEntity
 import com.sdbk.volumechanger.R
 import com.sdbk.volumechanger.databinding.DialogAddLocationBinding
+import com.sdbk.volumechanger.util.coordinateToAddress
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -56,7 +58,11 @@ class AddLocationDialog(
     }
 
     private fun initView() {
-        setAddressFromLatLng()
+        CoroutineScope(Dispatchers.Main).launch {
+            val address = withContext(Dispatchers.IO) { coordinateToAddress(requireContext(), coordinate.latitude, coordinate.longitude) }
+            binding.locationTextview.text = address
+        }
+
         rangeSpinnerAdapter = ArrayAdapter.createFromResource(
             requireActivity(),
             R.array.range_array,
@@ -175,40 +181,6 @@ class AddLocationDialog(
         override fun onStopTrackingTouch(seekbar: SeekBar) {
             mediaVolume = seekbar.progress
             changeMediaVolumeButtonDrawable()
-        }
-    }
-
-    private fun setAddressFromLatLng() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val geocoder = Geocoder(requireActivity(), Locale.getDefault())
-
-            geocoder.getFromLocation(coordinate.latitude, coordinate.longitude, 1, GeocodeListener {
-                val address = it.first().getAddressLine(0)
-                lifecycleScope.launch(Dispatchers.Main) {
-                    binding.locationTextview.text = address
-                }
-            })
-        } else {
-            requireActivity().lifecycleScope.launch(Dispatchers.Main) {
-                val address: CharSequence = withContext(Dispatchers.Default) {
-                    val geocoder = Geocoder(requireActivity(), Locale.getDefault())
-
-                    val addressList = geocoder.getFromLocation(coordinate.latitude, coordinate.longitude, 1)
-                    addressList?.run {
-                        if (isNotEmpty()) first().getAddressLine(0)
-                        else ""
-                    } ?: ""
-                }
-                binding.locationTextview.text = address
-            }
-        }
-    }
-
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        return object : Dialog(requireActivity(), theme) {
-            override fun onBackPressed() {
-                if (isCancelable) dialog?.dismiss()
-            }
         }
     }
 }

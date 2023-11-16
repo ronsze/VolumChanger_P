@@ -2,6 +2,7 @@ package com.sdbk.volumechanger.features.main
 
 import android.app.AlertDialog
 import android.content.Intent
+import android.util.Log
 import android.view.LayoutInflater
 import androidx.activity.viewModels
 import com.sdbk.domain.Constants.LOCATION
@@ -30,11 +31,15 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
         viewModel.updateList()
     }
 
-    private val geofenceModule = GeofenceModule(this)
+    private val geofenceModule by lazy {
+        GeofenceModule(this)
+    }
 
     override fun initData() {
-        viewModel.setData(intent.getSerializable(LOCATION_LIST))
+        viewModel.setData(intent.getSerializable<LocationListWrapper>(LOCATION_LIST).locationList)
         binding.locationRecyclerView.adapter = locationListAdapter
+        Log.e("qweqwe", "${viewModel.locationList}")
+        locationListAdapter.notifyItemChanged(0, viewModel.locationList.size)
     }
 
     override fun observeViewModel() {

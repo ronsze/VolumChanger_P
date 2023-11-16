@@ -14,5 +14,5 @@ data class LocationEntity(
     @ColumnInfo(name = "bell_volume") val bellVolume: Int,
     @ColumnInfo(name = "media_volume") val mediaVolume: Int
 ): Serializable {
-    @PrimaryKey(autoGenerate = true) val id: Int = 0
+    @PrimaryKey(autoGenerate = true) var id: Long = 0
 }

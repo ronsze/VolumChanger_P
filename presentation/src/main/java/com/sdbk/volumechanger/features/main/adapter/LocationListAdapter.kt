@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.sdbk.domain.location.LocationEntity
 import com.sdbk.volumechanger.databinding.ItemLocationListBinding
-import com.sdbk.volumechanger.util.latLngToAddress
+import com.sdbk.volumechanger.util.coordinateToAddress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -38,7 +38,7 @@ class LocationListAdapter(
             }
 
             CoroutineScope(Dispatchers.Main).launch {
-                location.text = latLngToAddress(context, item.latitude, item.longitude)
+                location.text = coordinateToAddress(context, item.latitude, item.longitude)
             }
         }
     }

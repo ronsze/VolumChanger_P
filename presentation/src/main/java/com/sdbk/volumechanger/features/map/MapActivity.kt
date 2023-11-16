@@ -26,6 +26,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.sdbk.domain.Constants.LOCATION_LIST
 import com.sdbk.domain.location.LocationEntity
+import com.sdbk.domain.location.LocationListWrapper
 import com.sdbk.volumechanger.R
 import com.sdbk.volumechanger.base.BaseActivity
 import com.sdbk.volumechanger.databinding.ActivityMapBinding
@@ -47,9 +48,12 @@ class MapActivity : BaseActivity<ActivityMapBinding, MapViewModel>(), OnMapReady
     override val bindingInflater: (LayoutInflater) -> ActivityMapBinding = ActivityMapBinding::inflate
     override val viewModel: MapViewModel by viewModels()
 
-    private val fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
-    private val geofenceModule = GeofenceModule(this)
-
+    private val fusedLocationClient: FusedLocationProviderClient by lazy {
+        LocationServices.getFusedLocationProviderClient(this)
+    }
+    private val geofenceModule by lazy {
+        GeofenceModule(this)
+    }
     private lateinit var googleMap: GoogleMap
     private lateinit var userMarker: Marker
 
@@ -59,7 +63,7 @@ class MapActivity : BaseActivity<ActivityMapBinding, MapViewModel>(), OnMapReady
     private val circleList = ArrayList<Circle>()
 
     override fun initData() {
-        viewModel.setData(intent.getSerializable(LOCATION_LIST))
+        viewModel.setData(intent.getSerializable<LocationListWrapper>(LOCATION_LIST).locationList)
 
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as? SupportMapFragment
         mapFragment?.getMapAsync(this)
@@ -73,6 +77,14 @@ class MapActivity : BaseActivity<ActivityMapBinding, MapViewModel>(), OnMapReady
 
         viewModel.showDeleteDialogEvent.observe(this) {
             showDeleteDialog(it)
+        }
+
+        viewModel.addGeofenceEvent.observe(this) {
+            geofenceModule.addGeofence(it, {
+                createMarker(it)
+                createCircle(it)
+                showToast(getString(R.string.add_location))
+            })
         }
 
         viewModel.removeGeofenceEvent.observe(this) {

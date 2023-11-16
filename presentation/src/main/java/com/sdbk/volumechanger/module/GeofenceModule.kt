@@ -3,8 +3,10 @@ package com.sdbk.volumechanger.module
 import android.Manifest
 import android.app.Activity
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.core.app.ActivityCompat
 import androidx.core.os.bundleOf
@@ -18,14 +20,18 @@ import com.sdbk.volumechanger.broadcast.GeofenceBroadcastReceiver
 import java.io.Serializable
 
 class GeofenceModule(
-    private val activity: Activity
+    private val context: Context
 ) {
-    private val geofencingClient = LocationServices.getGeofencingClient(activity)
+    private val geofencingClient = LocationServices.getGeofencingClient(context.applicationContext)
 
     private fun geofencePendingIntent(data: Bundle): PendingIntent {
-        val intent = Intent(activity, GeofenceBroadcastReceiver::class.java)
+        val intent = Intent(context, GeofenceBroadcastReceiver::class.java)
         intent.putExtra(DATA, data)
-        return PendingIntent.getBroadcast(activity, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        val flag =
+            if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_MUTABLE
+            else PendingIntent.FLAG_UPDATE_CURRENT
+
+        return PendingIntent.getBroadcast(context, 0, intent, flag)
     }
 
     private fun getGeofence(location: LocationEntity): Geofence =
@@ -48,7 +54,7 @@ class GeofenceModule(
         }.build()
 
     fun addGeofence(location: LocationEntity, successEvent: () -> Unit, failureEvent: () -> Unit = {}) {
-        if (ActivityCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             val geofence = getGeofence(location)
             val request = getGeofencingRequest(geofence)
             val pendingIntent = geofencePendingIntent(bundleOf(LOCATION to location))

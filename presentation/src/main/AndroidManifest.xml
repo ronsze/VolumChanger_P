@@ -19,10 +19,6 @@
         tools:targetApi="33"
         android:theme="@style/Theme.VolumeChanger">
         <activity
-            android:name=".features.agreements.TermsOfUseActivity"
-            android:exported="false"
-            android:screenOrientation="portrait" />
-        <activity
             android:name=".features.agreements.PrivacyPolicyActivity"
             android:exported="false"
             android:screenOrientation="portrait" />

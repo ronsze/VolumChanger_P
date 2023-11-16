@@ -20,6 +20,7 @@ class SplashViewModel @Inject constructor(
 
     fun loadData() {
         getLocationUseCase(viewModelScope, {
+            locationList.addAll(it)
             _navigateToMainEvent.call()
         }, handleBaseError())
     }

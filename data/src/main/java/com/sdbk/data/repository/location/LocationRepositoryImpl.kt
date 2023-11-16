@@ -2,8 +2,9 @@ package com.sdbk.data.repository.location
 
 import com.sdbk.domain.location.LocationEntity
 import com.sdbk.domain.repository.location.LocationRepository
+import javax.inject.Inject
 
-class LocationRepositoryImpl(
+class LocationRepositoryImpl @Inject constructor(
     private val localDataSource: LocalLocationDataSource
 ): LocationRepository {
     override suspend fun getLocationAll(): List<LocationEntity> = localDataSource.getLocationAll()

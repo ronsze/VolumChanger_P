@@ -1,5 +1,6 @@
 package com.sdbk.volumechanger.features.main
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
 import com.sdbk.domain.location.LocationEntity
@@ -22,6 +23,7 @@ class MainViewModel @Inject constructor(
     val removeGeofenceEvent: LiveData<Int> get() = _removeGeofenceEvent
 
     fun setData(locationList: ArrayList<LocationEntity>) {
+        Log.e("qweqwe", "${locationList}")
         _locationList.addAll(locationList)
     }
 
@@ -35,7 +37,7 @@ class MainViewModel @Inject constructor(
     fun deleteLocation(location: LocationEntity) {
         deleteLocationUseCase(location, viewModelScope, {
             _locationList.remove(location)
-            _removeGeofenceEvent.postValue(location.id)
+            _removeGeofenceEvent.postValue(location.id.toInt())
         }, handleBaseError())
     }
 }

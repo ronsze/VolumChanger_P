@@ -3,10 +3,8 @@ package com.sdbk.volumechanger.features.map
 import android.app.Application
 import android.location.Location
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
-import com.sdbk.domain.dao.location.LocationDao
 import com.sdbk.domain.location.LocationEntity
 import com.sdbk.domain.usecase.DeleteLocationUseCase
 import com.sdbk.domain.usecase.GetLocationUseCase
@@ -15,16 +13,13 @@ import com.sdbk.volumechanger.R
 import com.sdbk.volumechanger.base.BaseViewModel
 import com.sdbk.volumechanger.util.addressToCoordinate
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kr.akaai.oxford_android.mvvm.SingleLiveEvent
 import javax.inject.Inject
 
 @HiltViewModel
 class MapViewModel @Inject constructor(
-    @ApplicationContext private val application: Application,
+    private val application: Application,
     private val getLocationUseCase: GetLocationUseCase,
     private val insertLocationUseCase: InsertLocationUseCase,
     private val deleteLocationUseCase: DeleteLocationUseCase
@@ -34,6 +29,9 @@ class MapViewModel @Inject constructor(
 
     private val _showDeleteDialogEvent = SingleLiveEvent<LocationEntity>()
     val showDeleteDialogEvent: LiveData<LocationEntity> get() = _showDeleteDialogEvent
+
+    private val _addGeofenceEvent = SingleLiveEvent<LocationEntity>()
+    val addGeofenceEvent: LiveData<LocationEntity> get() = _addGeofenceEvent
 
     private val _removeGeofenceEvent = SingleLiveEvent<Int>()
     val removeGeofenceEvent: LiveData<Int> get() = _removeGeofenceEvent
@@ -49,6 +47,7 @@ class MapViewModel @Inject constructor(
         if (!isOverlapping(location)) {
             insertLocationUseCase(location, viewModelScope, {
                 _locationList.add(it)
+                _addGeofenceEvent.postValue(it)
             }, handleBaseError())
         } else {
             showToast(application.getString(R.string.overlap_other_place))
@@ -58,7 +57,7 @@ class MapViewModel @Inject constructor(
     fun deleteLocation(location: LocationEntity) {
         deleteLocationUseCase(location, viewModelScope, {
             _locationList.remove(location)
-            _removeGeofenceEvent.postValue(location.id)
+            _removeGeofenceEvent.postValue(location.id.toInt())
         }, handleBaseError())
     }
 

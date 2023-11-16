@@ -19,7 +19,7 @@ class RoomProvider {
     fun provideLocationDatabase(@ApplicationContext context: Context): LocationDatabase =
         Room.databaseBuilder(
             context,
-            LocationDatabase::class.java, "location_database"
+            LocationDatabase::class.java, "database"
         ).build()
 
     @Provides

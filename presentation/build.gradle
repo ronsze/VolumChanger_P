@@ -15,7 +15,7 @@ if (secretsPropertiesFile.exists()) {
 
 android {
     namespace 'com.sdbk.volumechanger'
-    compileSdk 33
+    compileSdk 34
 
     signingConfigs {
         releaseWithSignedKey {
@@ -28,7 +28,7 @@ android {
 
     defaultConfig {
         applicationId "com.sdbk.volumechanger"
-        minSdk 23
+        minSdk 27
         targetSdk 33
         versionCode 7
         versionName "1.0.0"
@@ -92,11 +92,12 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.4.0"
 
     //room
-    def room_version = "2.5.0"
+    def room_version = "2.6.0"
 
     implementation "androidx.room:room-runtime:$room_version"
-    annotationProcessor "androidx.room:room-compiler:$room_version"
+    implementation "androidx.room:room-ktx:$room_version"
     kapt "androidx.room:room-compiler:$room_version"
+
 
     //geofence
     implementation 'com.google.android.gms:play-services-location:21.0.1'
