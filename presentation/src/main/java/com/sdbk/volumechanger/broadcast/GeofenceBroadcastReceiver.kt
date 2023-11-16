@@ -33,11 +33,14 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
             Log.e(TAG, errorMessage)
         }
 
-        if (geofencingEvent?.geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER)
-            volumeChange(context, intent.getSerializable(LOCATION))
+        if (geofencingEvent?.geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
+            val location = intent.getSerializable<LocationEntity>(LOCATION)
+            location?.run { volumeChange(context, this) }
+        }
     }
 
     private fun volumeChange(context: Context, location: LocationEntity) {
+
         val audioManager: AudioManager = context.applicationContext?.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
         CoroutineScope(Dispatchers.Main).launch {

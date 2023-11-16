@@ -14,9 +14,9 @@ import java.io.Serializable
 import java.util.Locale
 import kotlin.random.Random
 
-inline fun <reified T: Serializable> Intent.getSerializable(key: String): T =
+inline fun <reified T: Serializable> Intent.getSerializable(key: String): T? =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        getSerializableExtra(key, T::class.java) ?: throw NoExtraFoundMatchingKeyException()
+        getSerializableExtra(key, T::class.java)
     } else {
         getSerializableExtra(key) as T
     }

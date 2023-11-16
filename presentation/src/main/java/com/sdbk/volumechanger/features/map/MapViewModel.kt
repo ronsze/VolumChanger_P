@@ -39,8 +39,8 @@ class MapViewModel @Inject constructor(
     private val _locationList: ArrayList<LocationEntity> = arrayListOf()
     val locationList: List<LocationEntity> get() = _locationList
 
-    fun setData(locationList: ArrayList<LocationEntity>) {
-        _locationList.addAll(locationList)
+    fun setData(locationList: ArrayList<LocationEntity>?) {
+        locationList?.run { _locationList.addAll(this) }
     }
 
     fun addLocation(location: LocationEntity) {

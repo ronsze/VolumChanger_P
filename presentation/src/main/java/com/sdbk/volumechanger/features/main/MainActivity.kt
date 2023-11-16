@@ -2,7 +2,6 @@ package com.sdbk.volumechanger.features.main
 
 import android.app.AlertDialog
 import android.content.Intent
-import android.util.Log
 import android.view.LayoutInflater
 import androidx.activity.viewModels
 import com.sdbk.domain.Constants.LOCATION
@@ -36,9 +35,8 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
     }
 
     override fun initData() {
-        viewModel.setData(intent.getSerializable<LocationListWrapper>(LOCATION_LIST).locationList)
+        viewModel.setData(intent.getSerializable<LocationListWrapper>(LOCATION_LIST)?.locationList)
         binding.locationRecyclerView.adapter = locationListAdapter
-        Log.e("qweqwe", "${viewModel.locationList}")
         locationListAdapter.notifyItemChanged(0, viewModel.locationList.size)
     }
 

@@ -7,7 +7,6 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
-import android.location.Location
 import android.os.Looper
 import android.view.LayoutInflater
 import android.view.inputmethod.EditorInfo
@@ -16,14 +15,24 @@ import androidx.activity.viewModels
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import com.google.android.gms.location.*
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationListener
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.*
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.Circle
+import com.google.android.gms.maps.model.CircleOptions
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
+import com.google.android.gms.maps.model.MarkerOptions
+import com.sdbk.domain.Constants.LOCATION
 import com.sdbk.domain.Constants.LOCATION_LIST
 import com.sdbk.domain.location.LocationEntity
 import com.sdbk.domain.location.LocationListWrapper
@@ -56,6 +65,7 @@ class MapActivity : BaseActivity<ActivityMapBinding, MapViewModel>(), OnMapReady
     }
     private lateinit var googleMap: GoogleMap
     private lateinit var userMarker: Marker
+    private var firstLocation = true
 
     private var currentLocation = LatLng(0.0, 0.0)
 
@@ -63,7 +73,7 @@ class MapActivity : BaseActivity<ActivityMapBinding, MapViewModel>(), OnMapReady
     private val circleList = ArrayList<Circle>()
 
     override fun initData() {
-        viewModel.setData(intent.getSerializable<LocationListWrapper>(LOCATION_LIST).locationList)
+        viewModel.setData(intent.getSerializable<LocationListWrapper>(LOCATION_LIST)?.locationList)
 
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as? SupportMapFragment
         mapFragment?.getMapAsync(this)
@@ -101,6 +111,12 @@ class MapActivity : BaseActivity<ActivityMapBinding, MapViewModel>(), OnMapReady
         googleMap.setOnMapLongClickListener(onLongClickMap)
         googleMap.setOnMarkerClickListener(onClickMarker)
 
+        intent.getSerializable<LocationEntity>(LOCATION)?.run {
+            currentLocation = LatLng(latitude, longitude)
+            moveCamera(currentLocation)
+            firstLocation = false
+        }
+
         initUserMarker()
         initLocationMarkers()
         setFusedLocationListener()
@@ -132,8 +148,13 @@ class MapActivity : BaseActivity<ActivityMapBinding, MapViewModel>(), OnMapReady
 
     private fun setFusedLocationListener() {
         val listener = LocationListener { location ->
-            userMarker.position = LatLng(location.latitude, location.longitude)
-            currentLocation = LatLng(location.latitude, location.longitude)
+            val coordinate = LatLng(location.latitude, location.longitude)
+            userMarker.position = coordinate
+            currentLocation = coordinate
+            if (firstLocation) {
+                moveCamera(coordinate)
+                firstLocation = false
+            }
         }
 
         val request = LocationRequest.Builder(5000)
